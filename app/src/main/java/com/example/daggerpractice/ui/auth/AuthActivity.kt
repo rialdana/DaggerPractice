@@ -1,5 +1,6 @@
 package com.example.daggerpractice.ui.auth
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
@@ -10,6 +11,7 @@ import androidx.lifecycle.ViewModelProviders
 import com.bumptech.glide.RequestManager
 import com.example.daggerpractice.R
 import com.example.daggerpractice.di.auth.AuthResource
+import com.example.daggerpractice.ui.main.MainActivity
 import com.example.daggerpractice.viewmodels.ViewModelProviderFactory
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.android.synthetic.main.activity_auth.*
@@ -44,7 +46,7 @@ class AuthActivity : DaggerAppCompatActivity() {
     }
 
     private fun subscribeObservers() {
-        viewModel.authUser.observe(this, Observer {
+        viewModel.observeAuthState().observe(this, Observer {
             it?.let {
                 when (it) {
                     is AuthResource.Loading -> {
@@ -53,6 +55,7 @@ class AuthActivity : DaggerAppCompatActivity() {
                     is AuthResource.Authenticated -> {
                         showProgressBar(false)
                         Log.i(TAG, "Login Success: ${it.data?.email}")
+                        onLoginSucces()
                     }
                     is AuthResource.NotAuthenticated -> {
                         showProgressBar(false)
@@ -64,6 +67,11 @@ class AuthActivity : DaggerAppCompatActivity() {
                 }
             }
         })
+    }
+
+    private fun onLoginSucces(){
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 
     private fun showProgressBar(isVisible: Boolean) {

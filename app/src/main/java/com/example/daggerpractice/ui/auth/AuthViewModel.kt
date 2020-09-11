@@ -5,15 +5,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
+import com.example.daggerpractice.SessionManager
 import com.example.daggerpractice.di.auth.AuthResource
 import com.example.daggerpractice.models.User
 import com.example.daggerpractice.network.auth.AuthApi
 import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
-class AuthViewModel @Inject constructor(val authApi: AuthApi) : ViewModel() {
-
-    val authUser = MediatorLiveData<AuthResource<User>>()
+class AuthViewModel @Inject constructor(
+    private val authApi: AuthApi,
+    private val sessionManager: SessionManager
+) : ViewModel() {
 
     init {
         Log.i(TAG, "Hi from authViewModel, I was injected!")
@@ -21,10 +23,11 @@ class AuthViewModel @Inject constructor(val authApi: AuthApi) : ViewModel() {
     }
 
     fun authenticateWithId(userId: Int) {
+        sessionManager.authenticateWithId(queryUserId(userId))
+    }
 
-        authUser.value = AuthResource.Loading()
-
-        val source: LiveData<AuthResource<User>> = LiveDataReactiveStreams.fromPublisher(
+    private fun queryUserId(userId: Int): LiveData<AuthResource<User>> {
+        return LiveDataReactiveStreams.fromPublisher(
             authApi.getUser(userId).onErrorReturn {
                 return@onErrorReturn User(-1, "", "", "")
             }.map {
@@ -34,13 +37,9 @@ class AuthViewModel @Inject constructor(val authApi: AuthApi) : ViewModel() {
                 return@map AuthResource.Authenticated(it)
             }.subscribeOn(Schedulers.io())
         )
-
-        authUser.addSource(source) {
-            authUser.value = it
-            authUser.removeSource(source)
-        }
     }
 
+    fun observeAuthState() = sessionManager.getAuthUser()
 
     companion object {
         private const val TAG = "AuthViewModel"

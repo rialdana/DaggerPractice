@@ -2,6 +2,8 @@ package com.example.daggerpractice.ui.auth
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.Log
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.bumptech.glide.RequestManager
 import com.example.daggerpractice.R
@@ -12,7 +14,7 @@ import javax.inject.Inject
 
 class AuthActivity : DaggerAppCompatActivity() {
 
-    private lateinit var authViewModel: AuthViewModel
+    private lateinit var viewModel: AuthViewModel
 
     @Inject
     lateinit var providerFactory: ViewModelProviderFactory
@@ -28,9 +30,30 @@ class AuthActivity : DaggerAppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_auth)
 
-        authViewModel = ViewModelProviders.of(this, providerFactory).get(AuthViewModel::class.java)
+        login_button.setOnClickListener {
+            attemptLogin()
+        }
+
+        viewModel = ViewModelProviders.of(this, providerFactory).get(AuthViewModel::class.java)
 
         setLogo()
+        subscribeObservers()
+    }
+
+    private fun subscribeObservers() {
+        viewModel.authUser.observe(this, Observer {
+            it?.let {
+                Log.d(TAG, "User was authenticated: ${it.username}")
+            }
+        })
+    }
+
+    private fun attemptLogin() {
+        if (user_id_input.text.toString().isEmpty()) {
+            return
+        } else {
+            viewModel.authenticateWithId(user_id_input.text.toString().toInt())
+        }
     }
 
     fun setLogo() {

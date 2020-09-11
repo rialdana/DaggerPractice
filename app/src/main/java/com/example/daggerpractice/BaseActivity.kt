@@ -15,9 +15,10 @@ abstract class BaseActivity : DaggerAppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        subscribeObservers()
     }
 
-    fun subscribeObservers() {
+    private fun subscribeObservers() {
         sessionManager.getAuthUser().observe(this, Observer {
             it?.let {
                 when (it) {
